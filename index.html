@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Student Attendance</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #a1c4fd, #c2e9fb);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .container {
+      background: white;
+      border-radius: 1rem;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      width: 95%; max-width: 500px;
+      padding: 1.5rem;
+    }
+    h1 {
+      text-align: center;
+      color: #023e8a;
+      margin-bottom: 1rem;
+      letter-spacing: 1px;
+    }
+    .selectors {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    select {
+      flex: 1;
+      padding: 0.6rem 0.8rem;
+      border-radius: 0.5rem;
+      border: 1px solid #90e0ef;
+      background: #caf0f8;
+      font-weight: 600;
+    }
+    .student-card {
+      background: linear-gradient(135deg, #e0f7fa, #f1faff);
+      margin: 0.6rem 0;
+      padding: 0.8rem;
+      border-radius: 0.8rem;
+      transition: transform 0.2s ease;
+    }
+    .student-card:hover { transform: translateY(-2px); }
+    .student-header {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+    }
+    .status-icon {
+      font-size: 1.2rem;
+      margin-right: 0.6rem;
+      color: #666;
+      transition: color 0.2s;
+    }
+    .student-card.present .status-icon { color: #2b9348; }
+    .student-card.absent .status-icon { color: #d00000; }
+    .student-header .name {
+      font-weight: 600;
+      color: #03045e;
+      flex: 1;
+    }
+    .appearance-dropdown {
+      margin-top: 0.6rem;
+      display: none;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+    .student-card.present .appearance-dropdown {
+      display: flex;
+    }
+    .appearance-dropdown label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.9rem;
+      color: #023047;
+    }
+    .appearance-dropdown select {
+      width: 60%;
+      padding: 0.4rem;
+      border-radius: 0.4rem;
+      border: 1px solid #90e0ef;
+      background: #e0f7fa;
+    }
+    #generate-btn {
+      width: 100%;
+      padding: 0.8rem;
+      margin-top: 1.2rem;
+      background: linear-gradient(to right, #2b9348, #52b69a);
+      color: white;
+      font-size: 1rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 0.6rem;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    #generate-btn:hover { opacity: 0.9; }
+  </style>
+  <!-- SheetJS for Excel generation -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>Student Attendance</h1>
+    <div class="selectors">
+      <select id="class-select">
+        <option value="">Select Class</option>
+        <option value="3">Class 3</option>
+        <option value="4">Class 4</option>
+        <option value="5">Class 5</option>
+        <option value="6">Class 6</option>
+        <option value="7">Class 7</option>
+        <option value="8">Class 8</option>
+        <option value="9">Class 9</option>
+        <option value="10">Class 10</option>
+      </select>
+      <select id="section-select">
+        <option value="">Select Section</option>
+        <option value="A">Section A</option>
+        <option value="B">Section B</option>
+      </select>
+    </div>
+    <div id="student-list"></div>
+    <button id="generate-btn">Generate Excel Sheet</button>
+  </div>
+
+  <script>
+    const classSelect = document.getElementById('class-select');
+    const sectionSelect = document.getElementById('section-select');
+    const studentListDiv = document.getElementById('student-list');
+    const generateBtn = document.getElementById('generate-btn');
+
+    const studentsData = {
+      3: { A: ["Add name here","Add name here"], B: ["Add name here","Add name here"] },
+      4: { A: ["Add name here","Add name here"], B: ["Add name here","Add name here"] },
+      5: { A: ["Add name here","Add name here"], B: ["Add name here","Add name here"] },
+      6: { A: ["Add name here","Add name here"], B: ["Add name here","Add name here"] },
+      7: { A: ["Add name here","Add name here"], B: ["Add name here","Add name here"] },
+      8: { A: ["Add name here","Add name here"], B: ["Add name here","Add name here"] },
+      9: { A: ["Add name here","Add name here"], B: ["Add name here","Add name here"] },
+      10:{ A: ["Add name here","Add name here"], B: ["Add name here","Add name here"] }
+    };
+
+    function createStudentCard(name) {
+      const card = document.createElement('div');
+      card.className = 'student-card';
+
+      const header = document.createElement('div');
+      header.className = 'student-header';
+      const icon = document.createElement('span');
+      icon.className = 'status-icon';
+      icon.textContent = '➖';
+      const nameSpan = document.createElement('span');
+      nameSpan.className = 'name';
+      nameSpan.textContent = name;
+      header.append(icon, nameSpan);
+      card.append(header);
+
+      const dropdown = document.createElement('div');
+      dropdown.className = 'appearance-dropdown';
+      dropdown.innerHTML = `
+        <label>Uniform: <select><option value="">--</option><option value="Yes">Yes</option><option value="No">No</option></select></label>
+        <label>Nails: <select><option value="">--</option><option value="Clean">Clean</option><option value="Not Clean">Not Clean</option></select></label>
+        <label>I-Card: <select><option value="">--</option><option value="Worn">Worn</option><option value="Not Worn">Not Worn</option></select></label>
+        <label>Shoes Guard: <select><option value="">--</option><option value="Good">Good</option><option value="Not Good">Not Good</option></select></label>
+      `;
+      card.append(dropdown);
+
+      let count=0;
+      header.addEventListener('click', () => {
+        count++;
+        if(count%3===1){ card.classList.add('present'); card.classList.remove('absent'); icon.textContent='✓'; }
+        else if(count%3===2){ card.classList.remove('present'); card.classList.add('absent'); icon.textContent='✗'; }
+        else{ card.classList.remove('present','absent'); icon.textContent='➖'; }
+      });
+      dropdown.querySelectorAll('select').forEach(s=> s.addEventListener('click',e=> e.stopPropagation()));
+      return card;
+    }
+
+    function loadStudents(){
+      studentListDiv.innerHTML='';
+      const cls=classSelect.value, sec=sectionSelect.value;
+      if(studentsData[cls] && studentsData[cls][sec]){
+        studentsData[cls][sec].forEach(n=> studentListDiv.append(createStudentCard(n)));
+      }
+    }
+    classSelect.addEventListener('change',loadStudents);
+    sectionSelect.addEventListener('change',loadStudents);
+
+    generateBtn.addEventListener('click',()=>{
+      const cls=classSelect.value, sec=sectionSelect.value;
+      const rec=[];
+      document.querySelectorAll('.student-card').forEach(card=>{
+        const name=card.querySelector('.name').textContent;
+        let status='No Mark'; if(card.classList.contains('present')) status='Present'; else if(card.classList.contains('absent')) status='Absent';
+        const vals=[...card.querySelectorAll('.appearance-dropdown select')].map(s=>s.value);
+        rec.push({Class:cls,Section:sec,Name:name,Status:status,Uniform:vals[0],Nails:vals[1],ICard:vals[2],ShoesGuard:vals[3]});
+      });
+      const ws=XLSX.utils.json_to_sheet(rec);
+      // Header styling
+      const hdr = XLSX.utils.decode_range(ws['!ref']);
+      for(let C=hdr.s.c;C<=hdr.e.c;C++){
+        const cell=XLSX.utils.encode_cell({r:0,c:C});
+        if(!ws[cell]) continue;
+        ws[cell].s={font:{bold:true,color:{rgb:'FFFFFFFF'}},fill:{fgColor:{rgb:'0077B6'}}};
+      }
+      ws['!cols'] = Array(hdr.e.c+1).fill({wpx:100});
+      const wb=XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb,ws,'Attendance');
+      XLSX.writeFile(wb,`Attendance_C${cls}_S${sec}.xlsx`,{cellStyles:true});
+    });
+  </script>
+</body>
+</html>
